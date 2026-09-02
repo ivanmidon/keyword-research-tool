@@ -1,0 +1,130 @@
+<title>Keyword Research Tool</title>
+<style>
+:root{
+  --bg:#f6f7f4;--surface:#ffffff;--line:#e3e5df;--text:#22261f;--dim:#6b7264;--faint:#9aa091;
+  --accent:#3e6b3a;--accent-soft:#e8efe6;--good:#3e6b3a;--warn:#a07d1c;--bad:#a3402f;
+}
+body{background:var(--bg);color:var(--text);font:15px/1.5 "Avenir Next",Avenir,"Segoe UI",sans-serif;margin:0}
+.wrap{max-width:1060px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px}
+h1{font-size:19px;margin:0;letter-spacing:-.2px}
+.sub{color:var(--dim);font-size:12.5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+input[type=text]{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);min-width:250px;outline:none}
+input[type=text]:focus{border-color:var(--accent)}
+select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text)}
+button{font:inherit;font-size:13.5px;font-weight:600;padding:9px 16px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:var(--accent-soft);color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap}
+th.num,td.num{text-align:right}
+td{padding:9px 10px;border-bottom:1px solid #eef0ea;font-size:13.5px}
+tr:hover td{background:#fafbf8}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600}
+.pill.low{background:#e8efe6;color:var(--good)}
+.pill.med{background:#f5edd8;color:var(--warn)}
+.pill.high{background:#f6e2dd;color:var(--bad)}
+.score{font-weight:700}
+.note{color:var(--faint);font-size:11.5px;margin-top:10px}
+#login{max-width:360px;margin:11vh auto 0}
+#login .card{padding:26px}
+#login label{display:block;font-size:12px;color:var(--dim);margin:12px 0 4px}
+#login input{width:100%;box-sizing:border-box;min-width:0}
+#login button{width:100%;margin-top:16px}
+.err{color:var(--bad);font-size:12.5px;margin-top:10px;display:none}
+.stat{display:flex;gap:22px;margin:2px 0 16px;color:var(--dim);font-size:12.5px}
+.stat b{color:var(--text);font-size:15px;display:block}
+#app{display:none}
+</style>
+
+<div id="login" class="wrap">
+  <header><div class="logo">K</div><div><h1>Keyword Research Tool</h1><div class="sub">Etsy keyword &amp; product analytics</div></div></header>
+  <div class="card">
+    <label>Username</label><input type="text" id="u" placeholder="demo">
+    <label>Password</label><input type="text" id="p" placeholder="••••••••">
+    <button onclick="login()">Sign in</button>
+    <div class="err" id="err">Wrong credentials. Use the demo account.</div>
+  </div>
+</div>
+
+<div id="app" class="wrap">
+  <header>
+    <div class="logo">K</div>
+    <div><h1>Keyword Research Tool</h1><div class="sub">Etsy keyword &amp; product analytics · powered by the EverBee Research API</div></div>
+  </header>
+  <div class="card">
+    <div class="stat">
+      <span><b id="stTotal">0</b>keywords tracked</span>
+      <span><b id="stAvg">0</b>avg monthly volume</span>
+      <span><b id="stOpen">0</b>low-competition finds</span>
+    </div>
+    <div class="controls">
+      <input type="text" id="q" placeholder="Search keywords, e.g. wall art, tote bag…" oninput="render()">
+      <select id="comp" onchange="render()">
+        <option value="">Any competition</option>
+        <option value="low">Low competition</option>
+        <option value="med">Medium</option>
+        <option value="high">High</option>
+      </select>
+      <select id="sort" onchange="render()">
+        <option value="volume">Sort: Volume</option>
+        <option value="score">Sort: Score</option>
+        <option value="cpc">Sort: CPC</option>
+        <option value="competition">Sort: Competition</option>
+      </select>
+      <button class="ghost" onclick="document.getElementById('q').value='';render()">Reset</button>
+    </div>
+    <table>
+      <thead><tr><th>Keyword</th><th class="num">Monthly volume</th><th>Competition</th><th class="num">Score</th><th class="num">CPC</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="note">Demo dataset shown. Live mode connects to the EverBee Research API (/api/v1/keywords) with the app credentials.</p>
+  </div>
+</div>
+
+<script>
+const DATA=[
+["personalized tote bag",27400,18,86,0.42],["wall art prints",64100,72,54,0.61],
+["custom pet portrait",33800,44,71,0.55],["boho wall decor",22100,38,68,0.47],
+["wedding guest book",18500,29,74,0.52],["minimalist necklace",41200,66,49,0.58],
+["nursery wall art",25300,41,66,0.44],["custom name sign",19800,33,70,0.49],
+["digital planner 2026",52700,58,63,0.71],["crochet pattern pdf",31500,24,81,0.38],
+["engraved cutting board",14700,21,78,0.51],["baby milestone blanket",12900,26,72,0.36],
+["vintage poster print",23600,49,58,0.43],["personalized dog collar",16400,31,69,0.40],
+["macrame plant hanger",11800,27,67,0.33],["bridesmaid proposal box",13500,22,76,0.57],
+["kitchen wall decor",20900,45,60,0.41],["custom family portrait",28700,52,62,0.59],
+["tarot card deck",17300,35,71,0.46],["gold hoop earrings",38900,69,47,0.62],
+["teacher appreciation gift",15200,19,82,0.39],["laptop sleeve 14 inch",9800,23,66,0.35],
+["birth flower necklace",21500,30,75,0.53],["mens leather wallet",26800,55,56,0.64],
+["printable wall art set",34600,61,57,0.37],["ceramic coffee mug",29400,63,52,0.45],
+["custom neon sign",24100,47,61,0.66],["dried flower bouquet",10700,25,68,0.31],
+["initial pendant necklace",19100,36,67,0.50],["rustic wedding decor",13900,28,70,0.42],
+["gaming mouse pad xl",12200,32,63,0.34],["personalized keychain",22800,40,64,0.38],
+["linen table runner",8900,20,71,0.29],["zodiac sign print",11400,26,69,0.33],
+["mothers day gift box",30200,50,60,0.56],["abstract line art",16800,34,66,0.36],
+["pet memorial stone",9600,17,79,0.44],["custom song lyrics print",14300,24,74,0.41],
+["boho earrings dangle",18700,42,59,0.48],["felt letter board",7800,18,73,0.28]
+];
+function lvl(c){return c<30?'low':c<55?'med':'high'}
+function login(){
+  const u=document.getElementById('u').value.trim(), p=document.getElementById('p').value.trim();
+  if(u==='demo'&&p==='demo123'){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';render();}
+  else document.getElementById('err').style.display='block';
+}
+function render(){
+  const q=document.getElementById('q').value.toLowerCase().trim();
+  const cf=document.getElementById('comp').value;
+  const sk=document.getElementById('sort').value;
+  let rows=DATA.filter(r=>(!q||r[0].includes(q))&&(!cf||lvl(r[1*0+2])===cf));
+  const idx={volume:1,competition:2,score:3,cpc:4}[sk];
+  rows.sort((a,b)=>sk==='competition'?a[2]-b[2]:b[idx]-a[idx]);
+  document.getElementById('rows').innerHTML=rows.map(r=>
+    `<tr><td>${r[0]}</td><td class="num">${r[1].toLocaleString()}</td><td><span class="pill ${lvl(r[2])}">${lvl(r[2])} · ${r[2]}</span></td><td class="num score">${r[3]}</td><td class="num">$${r[4].toFixed(2)}</td></tr>`).join('');
+  document.getElementById('stTotal').textContent=rows.length;
+  document.getElementById('stAvg').textContent=rows.length?Math.round(rows.reduce((s,r)=>s+r[1],0)/rows.length).toLocaleString():0;
+  document.getElementById('stOpen').textContent=rows.filter(r=>lvl(r[2])==='low').length;
+}
+document.getElementById('p').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+</script>
